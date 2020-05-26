@@ -1,0 +1,236 @@
+<head>
+  <title>Fighter Check</title>
+  <script src="https://d3js.org/d3.v4.js"></script>
+  <!-- <script type="text/javascript" src="./bundle.js"></script> -->
+  <meta charset="utf-8">
+</head>
+
+<body>
+  <main id='main'></main>
+  <div id="my_dataviz"></div>
+  Fighter Check!!
+  <button onclick="update(winsAndLossesData)">Wins/Losses</button>
+  <button onclick="update(strikesData)">Strikes Attempted/Landed</button>
+  <script>
+
+    // const onClick = (arg, color) => {
+    //   update(arg);
+    //   changeColor(color);
+    //   console.log(arg, color)
+    // }
+    // set the dimensions and margins of the graph
+    var margin = { top: 30, right: 30, bottom: 70, left: 60 },
+      width = 460 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+    // append the svg object to the body of the page
+    var svg = d3.select("#my_dataviz")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",
+        "translate(" + margin.left + "," + margin.top + ")");
+
+    //data
+
+    var fighter =
+    {
+      "name": "Jon Jones",
+      "nickname": "Bones",
+      "fullname": "Jon \"Bones\" Jones",
+      "record": "21-1-0",
+      "association": "Jackson-Wink MMA",
+      "age": "27",
+      "birthday": "1987-07-19",
+      "hometown": "Rochester, New York USA",
+      "nationality": "United States",
+      "location": "Endicott, New York USA",
+      "height": "6' 4\"",
+      "height_cm": "193",
+      "weight": "205",
+      "weight_kg": "93",
+      "weight_class": "Light Heavyweight",
+      "college": "Iowa Central",
+      "degree": "Associates Degree",
+      "summary": [
+        "Wrestling",
+        "jiu-jitsu",
+        "muay thai"
+      ],
+      "wins": {
+        "total": 21,
+        "knockouts": 9,
+        "submissions": 6,
+        "decisions": 6,
+        "others": 0
+      },
+      "losses": {
+        "total": 1,
+        "knockouts": 0,
+        "submissions": 0,
+        "decisions": 0,
+        "others": 0
+      },
+      "strikes": {
+        "attempted": 1679,
+        "successful": 916,
+        "standing": 541,
+        "clinch": 188,
+        "ground": 187
+      },
+      "takedowns": {
+        "attempted": 64,
+        "successful": 33,
+        "submissions": 10,
+        "passes": 22,
+        "sweeps": 0
+      },
+      "fights": [
+        {
+          "name": "UFC 182 - Jones vs. Cormier",
+          "date": "Jan / 03 / 2015",
+          "url": "/events/UFC-182-Jones-vs-Cormier-38841",
+          "result": "win",
+          "method": "Decision (Unanimous)",
+          "referee": "Herb Dean",
+          "round": "5",
+          "time": "5:00",
+          "opponent": "Daniel Cormier"
+        },
+        {
+          "name": "UFC 172 - Jones vs. Teixeira",
+          "date": "Apr / 26 / 2014",
+          "url": "/events/UFC-172-Jones-vs-Teixeira-34401",
+          "result": "win",
+          "method": "Decision (Unanimous)",
+          "referee": "Dan Miragliotta",
+          "round": "5",
+          "time": "5:00",
+          "opponent": "Glover Teixeira"
+        },
+        {
+          "name": "UFC 165 - Jones vs. Gustafsson",
+          "date": "Sep / 21 / 2013",
+          "url": "/events/UFC-165-Jones-vs-Gustafsson-30249",
+          "result": "win",
+          "method": "Decision (Unanimous)",
+          "referee": "John McCarthy",
+          "round": "5",
+          "time": "5:00",
+          "opponent": "Alexander Gustafsson"
+        }
+      ]
+    }
+
+
+    function winsDataParser(fighter) {
+      const data = [];
+      data.push(
+        {
+          value: fighter.wins.total,
+          group: "Wins",
+          color: "blue"
+        }
+      );
+      return data;
+    }
+
+    function lossesDataParser(fighter) {
+      const data = [];
+      data.push(
+        {
+          value: fighter.losses.total,
+          group: "Losses",
+          color: "blue"
+        }
+      );
+      return data;
+    }
+
+    function strikesDataParser(fighter) {
+      const data = [];
+      data.push(
+        {
+          value: fighter.strikes.attempted,
+          group: "Attempted Strikes",
+          color: "red"
+        },
+        {
+          value: fighter.strikes.successful,
+          group: "Successful Strikes",
+          color: "red"
+        }
+      );
+      return data;
+    }
+
+    let strikesData = strikesDataParser(fighter);
+    let lossesData = lossesDataParser(fighter);
+    let winsData = winsDataParser(fighter);
+    let winsAndLossesData = winsData.concat(lossesData);
+
+    // console.log(strikesData)
+
+    // Initialize the X axis
+    var x = d3.scaleBand()
+      .range([0, width])
+      .padding(0.2);
+    var xAxis = svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+
+    // Initialize the Y axis
+    var y = d3.scaleLinear()
+      .range([height, 0]);
+    var yAxis = svg.append("g")
+      .attr("class", "myYaxis")
+
+
+    // A function that create / update the plot for a given variable:
+    function update(data) {
+
+      // Update the X axis
+      x.domain(data.map(function (d) { return d.group; }))
+      xAxis.call(d3.axisBottom(x))
+
+      // Update the Y axis
+      y.domain([0, d3.max(data, function (d) { console.log(d.value); return d.value })]);
+      yAxis.transition().duration(1000).call(d3.axisLeft(y));
+
+      // Create the u variable
+      var u = svg.selectAll("rect")
+        .data(data)
+
+      u
+        .enter()
+        .append("rect") // Add a new rect for each new elements
+        .merge(u) // get the already existing elements as well
+        .transition() // and apply changes to all of them
+        .duration(1000)
+        .attr("x", function (d) { return x(d.group); })
+        .attr("y", function (d) { return y(d.value); })
+        .attr("width", x.bandwidth())
+        .attr("height", function (d) { return height - y(d.value); })
+        .attr("fill", function (d) { return d.color })
+
+      // If less group in the new dataset, I delete the ones not in use anymore
+      u
+        .exit()
+        .remove()
+    }
+
+    // Initialize the plot with the first dataset
+    update(winsAndLossesData)
+
+    // This function is called by the buttons on top of the plot
+    function changeColor(color) {
+      d3.selectAll("rect")
+        .transition()
+        .duration(2000)
+        .style("fill", color)
+    }
+
+  </script>
+</body>
+
+</html>
